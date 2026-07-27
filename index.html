@@ -189,6 +189,11 @@
     color: #6b7280;
   }
 
+  .form-hint {
+    font-weight: 400;
+    color: #9ca3af;
+  }
+
   .form-field input {
     padding: 10px 12px;
     border: 1px solid #e5e7eb;
@@ -203,14 +208,29 @@
     border-color: #14213d;
   }
 
-  .form-submit {
+  .form-field input.input-error {
+    border-color: #b91c1c;
+  }
+
+  .field-error {
+    font-size: 12px;
+    color: #b91c1c;
+  }
+
+  .form-buttons {
+    display: flex;
+    gap: 10px;
     margin-top: 4px;
-    padding: 12px;
+  }
+
+  .form-submit {
+    flex: 1;
+    padding: 12px 8px;
     border: none;
     border-radius: 12px;
     background: #14213d;
     color: #ffffff;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: opacity 0.2s ease;
@@ -337,13 +357,26 @@ function CardQRCode({ value, size = 140 }) {
   return <div className="qr-code" ref={containerRef}></div>;
 }
 
-function SaveCardForm({ cardOwner }) {
+function ContactForm({ cardOwner }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [meetingDate, setMeetingDate] = useState("");
+  const [dateMissing, setDateMissing] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [activeAction, setActiveAction] = useState(null); // "save_card" | "meeting_request"
+
+  const todayISO = new Date().toISOString().split("T")[0];
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const action = event.nativeEvent.submitter.value;
+
+    if (action === "meeting_request" && !meetingDate) {
+      setDateMissing(true);
+      return;
+    }
+    setDateMissing(false);
+    setActiveAction(action);
     setStatus("sending");
 
     try {
@@ -351,9 +384,10 @@ function SaveCardForm({ cardOwner }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "save_card",
+          type: action,
           name,
           email,
+          meetingDate: action === "meeting_request" ? meetingDate : null,
           cardOwner,
           submittedAt: new Date().toISOString(),
         }),
@@ -364,6 +398,7 @@ function SaveCardForm({ cardOwner }) {
       setStatus("success");
       setName("");
       setEmail("");
+      setMeetingDate("");
     } catch (error) {
       setStatus("error");
     }
@@ -371,7 +406,7 @@ function SaveCardForm({ cardOwner }) {
 
   return (
     <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-title">Bilgilerini bırak, kartı sana kaydedelim</div>
+      <div className="form-title">Bize ulaşın</div>
 
       <div className="form-field">
         <label htmlFor="visitor-name">Ad Soyad</label>
@@ -397,103 +432,51 @@ function SaveCardForm({ cardOwner }) {
         />
       </div>
 
-      <button className="form-submit" type="submit" disabled={status === "sending"}>
-        {status === "sending" ? "Gönderiliyor..." : "Kartı Kaydet"}
-      </button>
-
-      {status === "success" && (
-        <div className="form-message success">Kaydedildi, teşekkürler!</div>
-      )}
-      {status === "error" && (
-        <div className="form-message error">Bir şeyler ters gitti, lütfen tekrar deneyin.</div>
-      )}
-    </form>
-  );
-}
-
-function MeetingRequestForm({ cardOwner }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [meetingDate, setMeetingDate] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | sending | success | error
-
-  const todayISO = new Date().toISOString().split("T")[0];
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setStatus("sending");
-
-    try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "meeting_request",
-          name,
-          email,
-          meetingDate,
-          cardOwner,
-          submittedAt: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) throw new Error("request failed");
-
-      setStatus("success");
-      setName("");
-      setEmail("");
-      setMeetingDate("");
-    } catch (error) {
-      setStatus("error");
-    }
-  };
-
-  return (
-    <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-title">Toplantı talep et</div>
-
       <div className="form-field">
-        <label htmlFor="meeting-name">Ad Soyad</label>
-        <input
-          id="meeting-name"
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Adınız Soyadınız"
-          required
-        />
-      </div>
-
-      <div className="form-field">
-        <label htmlFor="meeting-email">E-posta</label>
-        <input
-          id="meeting-email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="ornek@eposta.com"
-          required
-        />
-      </div>
-
-      <div className="form-field">
-        <label htmlFor="meeting-date">Tercih Ettiğiniz Tarih</label>
+        <label htmlFor="meeting-date">
+          Tercih Ettiğiniz Tarih <span className="form-hint">(toplantı talebi için)</span>
+        </label>
         <input
           id="meeting-date"
           type="date"
           value={meetingDate}
           min={todayISO}
-          onChange={(event) => setMeetingDate(event.target.value)}
-          required
+          onChange={(event) => {
+            setMeetingDate(event.target.value);
+            setDateMissing(false);
+          }}
+          className={dateMissing ? "input-error" : ""}
         />
+        {dateMissing && (
+          <div className="field-error">Toplantı talebi için tarih seçmelisiniz.</div>
+        )}
       </div>
 
-      <button className="form-submit" type="submit" disabled={status === "sending"}>
-        {status === "sending" ? "Gönderiliyor..." : "Toplantı Talep Et"}
-      </button>
+      <div className="form-buttons">
+        <button
+          className="form-submit"
+          type="submit"
+          name="action"
+          value="save_card"
+          disabled={status === "sending"}
+        >
+          {status === "sending" && activeAction === "save_card" ? "Gönderiliyor..." : "Kartı Kaydet"}
+        </button>
+        <button
+          className="form-submit"
+          type="submit"
+          name="action"
+          value="meeting_request"
+          disabled={status === "sending"}
+        >
+          {status === "sending" && activeAction === "meeting_request" ? "Gönderiliyor..." : "Toplantı Talep Et"}
+        </button>
+      </div>
 
       {status === "success" && (
-        <div className="form-message success">Talebiniz alındı, teşekkürler!</div>
+        <div className="form-message success">
+          {activeAction === "meeting_request" ? "Talebiniz alındı, teşekkürler!" : "Kaydedildi, teşekkürler!"}
+        </div>
       )}
       {status === "error" && (
         <div className="form-message error">Bir şeyler ters gitti, lütfen tekrar deneyin.</div>
@@ -543,8 +526,7 @@ function App() {
         <div className="qr-label">Kartviziti telefonla taratın</div>
         <CardQRCode value={LIVE_URL} size={140} />
       </div>
-      <SaveCardForm cardOwner={profile.name} />
-      <MeetingRequestForm cardOwner={profile.name} />
+      <ContactForm cardOwner={profile.name} />
     </>
   );
 }
