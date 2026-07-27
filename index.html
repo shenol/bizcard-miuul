@@ -158,6 +158,85 @@
     display: block;
     border-radius: 8px;
   }
+
+  .form-card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .form-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #14213d;
+    text-align: center;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+  }
+
+  .form-field label {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .form-field input {
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #14213d;
+    outline: none;
+  }
+
+  .form-field input:focus {
+    border-color: #14213d;
+  }
+
+  .form-submit {
+    margin-top: 4px;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: #14213d;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .form-submit:hover {
+    opacity: 0.9;
+  }
+
+  .form-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .form-message {
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .form-message.success {
+    color: #15803d;
+  }
+
+  .form-message.error {
+    color: #b91c1c;
+  }
 </style>
 </head>
 <body>
@@ -175,6 +254,9 @@ const { useState, useRef, useEffect } = React;
 
 // Kart yayına alındığında bu adresi güncelleyin (GitHub Pages URL'i).
 const LIVE_URL = "https://shenol.github.io/bizcard-miuul/";
+
+// "Kartı Kaydet" formu bu n8n webhook'una gönderim yapar.
+const WEBHOOK_URL = "https://n8n.rnhy.net/webhook/biz-card";
 
 const ICONS = {
   phone: (
@@ -255,6 +337,79 @@ function CardQRCode({ value, size = 140 }) {
   return <div className="qr-code" ref={containerRef}></div>;
 }
 
+function SaveCardForm({ cardOwner }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setStatus("sending");
+
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          cardOwner,
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) throw new Error("request failed");
+
+      setStatus("success");
+      setName("");
+      setEmail("");
+    } catch (error) {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <form className="form-card" onSubmit={handleSubmit}>
+      <div className="form-title">Bilgilerini bırak, kartı sana kaydedelim</div>
+
+      <div className="form-field">
+        <label htmlFor="visitor-name">Ad Soyad</label>
+        <input
+          id="visitor-name"
+          type="text"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Adınız Soyadınız"
+          required
+        />
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="visitor-email">E-posta</label>
+        <input
+          id="visitor-email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="ornek@eposta.com"
+          required
+        />
+      </div>
+
+      <button className="form-submit" type="submit" disabled={status === "sending"}>
+        {status === "sending" ? "Gönderiliyor..." : "Kartı Kaydet"}
+      </button>
+
+      {status === "success" && (
+        <div className="form-message success">Kaydedildi, teşekkürler!</div>
+      )}
+      {status === "error" && (
+        <div className="form-message error">Bir şeyler ters gitti, lütfen tekrar deneyin.</div>
+      )}
+    </form>
+  );
+}
+
 function ProfileCard({ profile }) {
   return (
     <div className="card">
@@ -296,6 +451,7 @@ function App() {
         <div className="qr-label">Kartviziti telefonla taratın</div>
         <CardQRCode value={LIVE_URL} size={140} />
       </div>
+      <SaveCardForm cardOwner={profile.name} />
     </>
   );
 }
