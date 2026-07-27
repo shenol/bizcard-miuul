@@ -362,6 +362,7 @@ function ContactForm({ cardOwner }) {
   const [email, setEmail] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
   const [dateMissing, setDateMissing] = useState(false);
+  const [fieldsMissing, setFieldsMissing] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
   const [activeAction, setActiveAction] = useState(null); // "save_card" | "meeting_request"
 
@@ -371,11 +372,13 @@ function ContactForm({ cardOwner }) {
     event.preventDefault();
     const action = event.nativeEvent.submitter.value;
 
-    if (action === "meeting_request" && !meetingDate) {
-      setDateMissing(true);
-      return;
-    }
-    setDateMissing(false);
+    const missingBasics = !name.trim() || !email.trim();
+    const missingDate = action === "meeting_request" && (!meetingDate || meetingDate < todayISO);
+
+    setFieldsMissing(missingBasics);
+    setDateMissing(missingDate);
+    if (missingBasics || missingDate) return;
+
     setActiveAction(action);
     setStatus("sending");
 
@@ -405,7 +408,7 @@ function ContactForm({ cardOwner }) {
   };
 
   return (
-    <form className="form-card" onSubmit={handleSubmit}>
+    <form className="form-card" onSubmit={handleSubmit} noValidate>
       <div className="form-title">Bize ulaşın</div>
 
       <div className="form-field">
@@ -414,9 +417,12 @@ function ContactForm({ cardOwner }) {
           id="visitor-name"
           type="text"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => {
+            setName(event.target.value);
+            setFieldsMissing(false);
+          }}
           placeholder="Adınız Soyadınız"
-          required
+          className={fieldsMissing ? "input-error" : ""}
         />
       </div>
 
@@ -426,10 +432,16 @@ function ContactForm({ cardOwner }) {
           id="visitor-email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setFieldsMissing(false);
+          }}
           placeholder="ornek@eposta.com"
-          required
+          className={fieldsMissing ? "input-error" : ""}
         />
+        {fieldsMissing && (
+          <div className="field-error">Ad soyad ve e-posta alanlarını doldurun.</div>
+        )}
       </div>
 
       <div className="form-field">
@@ -448,7 +460,7 @@ function ContactForm({ cardOwner }) {
           className={dateMissing ? "input-error" : ""}
         />
         {dateMissing && (
-          <div className="field-error">Toplantı talebi için tarih seçmelisiniz.</div>
+          <div className="field-error">Toplantı talebi için bugün veya sonraki bir tarih seçmelisiniz.</div>
         )}
       </div>
 
