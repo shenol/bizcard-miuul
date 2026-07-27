@@ -351,6 +351,7 @@ function SaveCardForm({ cardOwner }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          type: "save_card",
           name,
           email,
           cardOwner,
@@ -410,6 +411,97 @@ function SaveCardForm({ cardOwner }) {
   );
 }
 
+function MeetingRequestForm({ cardOwner }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [meetingDate, setMeetingDate] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+
+  const todayISO = new Date().toISOString().split("T")[0];
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setStatus("sending");
+
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "meeting_request",
+          name,
+          email,
+          meetingDate,
+          cardOwner,
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) throw new Error("request failed");
+
+      setStatus("success");
+      setName("");
+      setEmail("");
+      setMeetingDate("");
+    } catch (error) {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <form className="form-card" onSubmit={handleSubmit}>
+      <div className="form-title">Toplantı talep et</div>
+
+      <div className="form-field">
+        <label htmlFor="meeting-name">Ad Soyad</label>
+        <input
+          id="meeting-name"
+          type="text"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Adınız Soyadınız"
+          required
+        />
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="meeting-email">E-posta</label>
+        <input
+          id="meeting-email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="ornek@eposta.com"
+          required
+        />
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="meeting-date">Tercih Ettiğiniz Tarih</label>
+        <input
+          id="meeting-date"
+          type="date"
+          value={meetingDate}
+          min={todayISO}
+          onChange={(event) => setMeetingDate(event.target.value)}
+          required
+        />
+      </div>
+
+      <button className="form-submit" type="submit" disabled={status === "sending"}>
+        {status === "sending" ? "Gönderiliyor..." : "Toplantı Talep Et"}
+      </button>
+
+      {status === "success" && (
+        <div className="form-message success">Talebiniz alındı, teşekkürler!</div>
+      )}
+      {status === "error" && (
+        <div className="form-message error">Bir şeyler ters gitti, lütfen tekrar deneyin.</div>
+      )}
+    </form>
+  );
+}
+
 function ProfileCard({ profile }) {
   return (
     <div className="card">
@@ -452,6 +544,7 @@ function App() {
         <CardQRCode value={LIVE_URL} size={140} />
       </div>
       <SaveCardForm cardOwner={profile.name} />
+      <MeetingRequestForm cardOwner={profile.name} />
     </>
   );
 }
