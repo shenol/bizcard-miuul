@@ -257,6 +257,40 @@
   .form-message.error {
     color: #b91c1c;
   }
+
+  .phone-description {
+    font-size: 13px;
+    color: #6b7280;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .phone-button {
+    padding: 12px;
+    border: 1.5px solid #14213d;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #14213d;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .phone-button:hover {
+    background: #f4f6f8;
+  }
+
+  .phone-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .phone-hint {
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -277,6 +311,29 @@ const LIVE_URL = "https://shenol.github.io/bizcard-miuul/";
 
 // "Kartı Kaydet" ve "Toplantı Talep Et" formları bu n8n webhook'una gönderim yapar.
 const WEBHOOK_URL = "https://n8n.rmhy.net/webhook/biz-card";
+
+function buildVCard(profile) {
+  const phone = profile.contacts.find((c) => c.icon === "phone");
+  const email = profile.contacts.find((c) => c.icon === "mail");
+  const website = profile.contacts.find((c) => c.icon === "website");
+  const [firstName, ...rest] = profile.name.split(" ");
+  const lastName = rest.join(" ");
+
+  const lines = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `N:${lastName};${firstName};;;`,
+    `FN:${profile.name}`,
+    `ORG:${profile.company}`,
+    `TITLE:${profile.title}`,
+  ];
+  if (phone) lines.push(`TEL;TYPE=CELL:${phone.href.replace("tel:", "")}`);
+  if (email) lines.push(`EMAIL:${email.href.replace("mailto:", "")}`);
+  if (website) lines.push(`URL:${website.href}`);
+  lines.push("END:VCARD");
+
+  return lines.join("\r\n");
+}
 
 const ICONS = {
   phone: (
@@ -357,9 +414,7 @@ function CardQRCode({ value, size = 140 }) {
   return <div className="qr-code" ref={containerRef}></div>;
 }
 
-function ContactForm({ cardOwner }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+function ContactForm({ cardOwner, name, email, onNameChange, onEmailChange }) {
   const [meetingDate, setMeetingDate] = useState("");
   const [dateMissing, setDateMissing] = useState(false);
   const [fieldsMissing, setFieldsMissing] = useState(false);
@@ -399,8 +454,8 @@ function ContactForm({ cardOwner }) {
       if (!response.ok) throw new Error("request failed");
 
       setStatus("success");
-      setName("");
-      setEmail("");
+      onNameChange("");
+      onEmailChange("");
       setMeetingDate("");
     } catch (error) {
       setStatus("error");
@@ -418,7 +473,7 @@ function ContactForm({ cardOwner }) {
           type="text"
           value={name}
           onChange={(event) => {
-            setName(event.target.value);
+            onNameChange(event.target.value);
             setFieldsMissing(false);
           }}
           placeholder="Adınız Soyadınız"
@@ -433,7 +488,7 @@ function ContactForm({ cardOwner }) {
           type="email"
           value={email}
           onChange={(event) => {
-            setEmail(event.target.value);
+            onEmailChange(event.target.value);
             setFieldsMissing(false);
           }}
           placeholder="ornek@eposta.com"
@@ -497,6 +552,67 @@ function ContactForm({ cardOwner }) {
   );
 }
 
+function AddToPhoneCard({ profile, visitorName, visitorEmail }) {
+  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+
+  const handleAddToPhone = async () => {
+    const vcard = buildVCard(profile);
+    const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${profile.name.replace(/\s+/g, "_")}.vcf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    if (!visitorName.trim() || !visitorEmail.trim()) return;
+
+    setStatus("sending");
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "phone_contact_saved",
+          name: visitorName,
+          email: visitorEmail,
+          cardOwner: profile.name,
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) throw new Error("request failed");
+      setStatus("success");
+    } catch (error) {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div className="form-card">
+      <div className="form-title">Kartviziti Telefonuma Ekle</div>
+      <div className="phone-description">
+        Kartvizitimi rehberine ekle. Yukarıdaki bilgilerini de doldurduysan, sana ayrıca ulaşabiliriz.
+      </div>
+
+      <button className="phone-button" type="button" onClick={handleAddToPhone} disabled={status === "sending"}>
+        {status === "sending" ? "Ekleniyor..." : "Telefonuma Ekle"}
+      </button>
+
+      <div className="phone-hint">Ad, e-posta ve telefonunu da yazarsan sana ayrıca ulaşabiliriz.</div>
+
+      {status === "success" && (
+        <div className="form-message success">Bilgilerin iletildi, teşekkürler!</div>
+      )}
+      {status === "error" && (
+        <div className="form-message error">Bir şeyler ters gitti, lütfen tekrar deneyin.</div>
+      )}
+    </div>
+  );
+}
+
 function ProfileCard({ profile }) {
   return (
     <div className="card">
@@ -531,6 +647,9 @@ const profile = {
 };
 
 function App() {
+  const [visitorName, setVisitorName] = useState("");
+  const [visitorEmail, setVisitorEmail] = useState("");
+
   return (
     <>
       <ProfileCard profile={profile} />
@@ -538,7 +657,14 @@ function App() {
         <div className="qr-label">Kartviziti telefonla taratın</div>
         <CardQRCode value={LIVE_URL} size={140} />
       </div>
-      <ContactForm cardOwner={profile.name} />
+      <ContactForm
+        cardOwner={profile.name}
+        name={visitorName}
+        email={visitorEmail}
+        onNameChange={setVisitorName}
+        onEmailChange={setVisitorEmail}
+      />
+      <AddToPhoneCard profile={profile} visitorName={visitorName} visitorEmail={visitorEmail} />
     </>
   );
 }
