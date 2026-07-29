@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { WEBHOOK_URL } from "../lib/config.js";
 
 export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChange }) {
@@ -7,11 +7,14 @@ export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChang
   const [fieldsMissing, setFieldsMissing] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
   const [activeAction, setActiveAction] = useState(null); // "save_card" | "meeting_request"
+  const isSubmittingRef = useRef(false);
 
   const todayISO = new Date().toISOString().split("T")[0];
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmittingRef.current) return;
+
     const action = event.nativeEvent.submitter.value;
 
     const missingBasics = !name.trim() || !email.trim();
@@ -21,6 +24,7 @@ export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChang
     setDateMissing(missingDate);
     if (missingBasics || missingDate) return;
 
+    isSubmittingRef.current = true;
     setActiveAction(action);
     setStatus("sending");
 
@@ -46,6 +50,8 @@ export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChang
       setMeetingDate("");
     } catch (error) {
       setStatus("error");
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
