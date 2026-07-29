@@ -1,0 +1,287 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f6f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.avatar {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #14213d;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #14213d;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 15px;
+  color: #14213d;
+  opacity: 0.75;
+  margin-bottom: 2px;
+}
+
+.company {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin-bottom: 24px;
+}
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.contact a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #14213d;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.contact a:hover {
+  text-decoration: underline;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #14213d;
+}
+
+.socials {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.socials a {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f4f6f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #14213d;
+  transition: background 0.2s ease;
+}
+
+.socials a:hover {
+  background: #e5e7eb;
+}
+
+.socials svg {
+  width: 18px;
+  height: 18px;
+}
+
+#root {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.qr-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.qr-code canvas,
+.qr-code img,
+.qr-code svg {
+  display: block;
+  border-radius: 8px;
+}
+
+.form-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #14213d;
+  text-align: center;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.form-field label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.form-hint {
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.form-field input {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #14213d;
+  outline: none;
+}
+
+.form-field input:focus {
+  border-color: #14213d;
+}
+
+.form-field input.input-error {
+  border-color: #b91c1c;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.form-submit {
+  flex: 1;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 12px;
+  background: #14213d;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.form-submit:hover {
+  opacity: 0.9;
+}
+
+.form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-message {
+  font-size: 13px;
+  text-align: center;
+}
+
+.form-message.success {
+  color: #15803d;
+}
+
+.form-message.error {
+  color: #b91c1c;
+}
+
+.phone-description {
+  font-size: 13px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.phone-button {
+  padding: 12px;
+  border: 1.5px solid #14213d;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #14213d;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.phone-button:hover {
+  background: #f4f6f8;
+}
+
+.phone-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.phone-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+}
