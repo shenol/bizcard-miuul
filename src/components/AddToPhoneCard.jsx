@@ -2,7 +2,7 @@ import { useState } from "react";
 import { WEBHOOK_URL } from "../lib/config.js";
 import { buildVCard } from "../lib/vcard.js";
 
-export function AddToPhoneCard({ profile, visitorName, visitorEmail }) {
+export function AddToPhoneCard({ profile, visitorName, visitorEmail, hasConsent }) {
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
 
   const handleAddToPhone = async () => {
@@ -17,7 +17,8 @@ export function AddToPhoneCard({ profile, visitorName, visitorEmail }) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    if (!visitorName.trim() || !visitorEmail.trim()) return;
+    // Kişisel veri (ad/e-posta) yalnızca Gizlilik Politikası onaylandıysa iletilir.
+    if (!hasConsent || !visitorName.trim() || !visitorEmail.trim()) return;
 
     setStatus("sending");
     try {

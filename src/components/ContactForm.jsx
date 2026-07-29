@@ -1,10 +1,20 @@
 import { useRef, useState } from "react";
 import { WEBHOOK_URL } from "../lib/config.js";
 
-export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChange }) {
+export function ContactForm({
+  cardOwner,
+  name,
+  email,
+  onNameChange,
+  onEmailChange,
+  consentGiven,
+  onConsentChange,
+  onOpenPolicy,
+}) {
   const [meetingDate, setMeetingDate] = useState("");
   const [dateMissing, setDateMissing] = useState(false);
   const [fieldsMissing, setFieldsMissing] = useState(false);
+  const [consentMissing, setConsentMissing] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
   const [activeAction, setActiveAction] = useState(null); // "save_card" | "meeting_request"
   const isSubmittingRef = useRef(false);
@@ -19,10 +29,12 @@ export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChang
 
     const missingBasics = !name.trim() || !email.trim();
     const missingDate = action === "meeting_request" && (!meetingDate || meetingDate < todayISO);
+    const missingConsent = !consentGiven;
 
     setFieldsMissing(missingBasics);
     setDateMissing(missingDate);
-    if (missingBasics || missingDate) return;
+    setConsentMissing(missingConsent);
+    if (missingBasics || missingDate || missingConsent) return;
 
     isSubmittingRef.current = true;
     setActiveAction(action);
@@ -111,6 +123,26 @@ export function ContactForm({ cardOwner, name, email, onNameChange, onEmailChang
           <div className="field-error">Toplantı talebi için bugün veya sonraki bir tarih seçmelisiniz.</div>
         )}
       </div>
+
+      <label className="consent-field">
+        <input
+          type="checkbox"
+          checked={consentGiven}
+          onChange={(event) => {
+            onConsentChange(event.target.checked);
+            setConsentMissing(false);
+          }}
+        />
+        <span>
+          <button type="button" className="link-button" onClick={onOpenPolicy}>
+            Gizlilik Politikası
+          </button>{" "}
+          kapsamında kişisel verilerimin işlenmesini kabul ediyorum.
+        </span>
+      </label>
+      {consentMissing && (
+        <div className="field-error">Devam etmek için Gizlilik Politikası'nı kabul etmelisiniz.</div>
+      )}
 
       <div className="form-buttons">
         <button
