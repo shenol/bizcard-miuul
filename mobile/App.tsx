@@ -2,11 +2,15 @@ import { useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ProfileCard } from "./src/components/ProfileCard";
 import { CardQRCode } from "./src/components/CardQRCode";
+import { ContactForm } from "./src/components/ContactForm";
 import { PrivacyPolicyModal } from "./src/components/PrivacyPolicyModal";
 import { profile } from "./src/data/profile";
 import { buildMecard } from "./src/lib/vcard";
 
 export default function App() {
+  const [visitorName, setVisitorName] = useState("");
+  const [visitorEmail, setVisitorEmail] = useState("");
+  const [consentGiven, setConsentGiven] = useState(false);
   const [isPolicyOpen, setIsPolicyOpen] = useState(false);
 
   return (
@@ -18,6 +22,17 @@ export default function App() {
           <Text style={styles.qrLabel}>Kartviziti telefonla taratın</Text>
           <CardQRCode value={buildMecard(profile)} size={140} />
         </View>
+
+        <ContactForm
+          cardOwner={profile.name}
+          name={visitorName}
+          email={visitorEmail}
+          onNameChange={setVisitorName}
+          onEmailChange={setVisitorEmail}
+          consentGiven={consentGiven}
+          onConsentChange={setConsentGiven}
+          onOpenPolicy={() => setIsPolicyOpen(true)}
+        />
 
         <TouchableOpacity onPress={() => setIsPolicyOpen(true)}>
           <Text style={styles.footerLink}>Gizlilik Politikası</Text>
