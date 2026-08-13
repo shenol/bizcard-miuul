@@ -1,10 +1,14 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ProfileCard } from "./src/components/ProfileCard";
 import { CardQRCode } from "./src/components/CardQRCode";
+import { PrivacyPolicyModal } from "./src/components/PrivacyPolicyModal";
 import { profile } from "./src/data/profile";
 import { buildMecard } from "./src/lib/vcard";
 
 export default function App() {
+  const [isPolicyOpen, setIsPolicyOpen] = useState(false);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -14,6 +18,12 @@ export default function App() {
           <Text style={styles.qrLabel}>Kartviziti telefonla taratın</Text>
           <CardQRCode value={buildMecard(profile)} size={140} />
         </View>
+
+        <TouchableOpacity onPress={() => setIsPolicyOpen(true)}>
+          <Text style={styles.footerLink}>Gizlilik Politikası</Text>
+        </TouchableOpacity>
+
+        <PrivacyPolicyModal open={isPolicyOpen} onClose={() => setIsPolicyOpen(false)} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -45,5 +55,10 @@ const styles = StyleSheet.create({
   qrLabel: {
     fontSize: 13,
     color: "#6b7280",
+  },
+  footerLink: {
+    fontSize: 12,
+    color: "#9ca3af",
+    textDecorationLine: "underline",
   },
 });
