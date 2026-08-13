@@ -3,6 +3,7 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import { ProfileCard } from "./src/components/ProfileCard";
 import { CardQRCode } from "./src/components/CardQRCode";
 import { ContactForm } from "./src/components/ContactForm";
+import { AddToPhoneCard } from "./src/components/AddToPhoneCard";
 import { PrivacyPolicyModal } from "./src/components/PrivacyPolicyModal";
 import { profile } from "./src/data/profile";
 import { buildMecard } from "./src/lib/vcard";
@@ -32,6 +33,13 @@ export default function App() {
           consentGiven={consentGiven}
           onConsentChange={setConsentGiven}
           onOpenPolicy={() => setIsPolicyOpen(true)}
+        />
+
+        <AddToPhoneCard
+          profile={profile}
+          visitorName={visitorName}
+          visitorEmail={visitorEmail}
+          hasConsent={consentGiven}
         />
 
         <TouchableOpacity onPress={() => setIsPolicyOpen(true)}>
