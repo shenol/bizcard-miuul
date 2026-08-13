@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// SDK 57's default `expo-contacts` export moved to a class-based API that isn't
+// compatible with the function-based calls this component uses — import the
+// legacy module on purpose, do not "fix" this back to `expo-contacts`.
 import * as Contacts from "expo-contacts/legacy";
 import { WEBHOOK_URL } from "../lib/config";
 import { Profile } from "../data/profile";
@@ -18,40 +21,44 @@ export function AddToPhoneCard({
   hasConsent: boolean;
 }) {
   const [status, setStatus] = useState<Status>("idle");
+  const isSubmittingRef = useRef(false);
 
   const handleAddToPhone = async () => {
-    const { status: permissionStatus } = await Contacts.requestPermissionsAsync();
-    if (permissionStatus !== "granted") {
-      setStatus("permission-denied");
-      return;
-    }
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
-    const phone = profile.contacts.find((c) => c.icon === "phone");
-    const email = profile.contacts.find((c) => c.icon === "mail");
-    const website = profile.contacts.find((c) => c.icon === "website");
-    const [firstName, ...rest] = profile.name.split(" ");
-
-    const contact: Contacts.Contact = {
-      contactType: Contacts.ContactTypes.Person,
-      name: profile.name,
-      firstName,
-      lastName: rest.join(" "),
-      company: profile.company,
-      jobTitle: profile.title,
-      phoneNumbers: phone ? [{ label: "mobile", number: phone.href.replace("tel:", "") }] : [],
-      emails: email ? [{ label: "work", email: email.href.replace("mailto:", "") }] : [],
-      urlAddresses: website ? [{ label: "work", url: website.href }] : [],
-    };
-
-    await Contacts.addContactAsync(contact);
-
-    if (!hasConsent || !visitorName.trim() || !visitorEmail.trim()) {
-      setStatus("success");
-      return;
-    }
-
-    setStatus("sending");
     try {
+      const { status: permissionStatus } = await Contacts.requestPermissionsAsync();
+      if (permissionStatus !== "granted") {
+        setStatus("permission-denied");
+        return;
+      }
+
+      const phone = profile.contacts.find((c) => c.icon === "phone");
+      const email = profile.contacts.find((c) => c.icon === "mail");
+      const website = profile.contacts.find((c) => c.icon === "website");
+      const [firstName, ...rest] = profile.name.split(" ");
+
+      const contact: Contacts.Contact = {
+        contactType: Contacts.ContactTypes.Person,
+        name: profile.name,
+        firstName,
+        lastName: rest.join(" "),
+        company: profile.company,
+        jobTitle: profile.title,
+        phoneNumbers: phone ? [{ label: "mobile", number: phone.href.replace("tel:", "") }] : [],
+        emails: email ? [{ label: "work", email: email.href.replace("mailto:", "") }] : [],
+        urlAddresses: website ? [{ label: "work", url: website.href }] : [],
+      };
+
+      await Contacts.addContactAsync(contact);
+
+      if (!hasConsent || !visitorName.trim() || !visitorEmail.trim()) {
+        setStatus("success");
+        return;
+      }
+
+      setStatus("sending");
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,6 +75,8 @@ export function AddToPhoneCard({
       setStatus("success");
     } catch (error) {
       setStatus("error");
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 

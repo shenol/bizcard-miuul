@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { ProfileCard } from "./src/components/ProfileCard";
 import { CardQRCode } from "./src/components/CardQRCode";
 import { ContactForm } from "./src/components/ContactForm";
@@ -15,40 +17,45 @@ export default function App() {
   const [isPolicyOpen, setIsPolicyOpen] = useState(false);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <ProfileCard profile={profile} />
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <ProfileCard profile={profile} />
 
-        <View style={styles.qrCard}>
-          <Text style={styles.qrLabel}>Kartviziti telefonla taratın</Text>
-          <CardQRCode value={buildMecard(profile)} size={140} />
-        </View>
+            <View style={styles.qrCard}>
+              <Text style={styles.qrLabel}>Kartviziti telefonla taratın</Text>
+              <CardQRCode value={buildMecard(profile)} size={140} />
+            </View>
 
-        <ContactForm
-          cardOwner={profile.name}
-          name={visitorName}
-          email={visitorEmail}
-          onNameChange={setVisitorName}
-          onEmailChange={setVisitorEmail}
-          consentGiven={consentGiven}
-          onConsentChange={setConsentGiven}
-          onOpenPolicy={() => setIsPolicyOpen(true)}
-        />
+            <ContactForm
+              cardOwner={profile.name}
+              name={visitorName}
+              email={visitorEmail}
+              onNameChange={setVisitorName}
+              onEmailChange={setVisitorEmail}
+              consentGiven={consentGiven}
+              onConsentChange={setConsentGiven}
+              onOpenPolicy={() => setIsPolicyOpen(true)}
+            />
 
-        <AddToPhoneCard
-          profile={profile}
-          visitorName={visitorName}
-          visitorEmail={visitorEmail}
-          hasConsent={consentGiven}
-        />
+            <AddToPhoneCard
+              profile={profile}
+              visitorName={visitorName}
+              visitorEmail={visitorEmail}
+              hasConsent={consentGiven}
+            />
 
-        <TouchableOpacity onPress={() => setIsPolicyOpen(true)}>
-          <Text style={styles.footerLink}>Gizlilik Politikası</Text>
-        </TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsPolicyOpen(true)}>
+              <Text style={styles.footerLink}>Gizlilik Politikası</Text>
+            </TouchableOpacity>
 
-        <PrivacyPolicyModal open={isPolicyOpen} onClose={() => setIsPolicyOpen(false)} />
-      </ScrollView>
-    </SafeAreaView>
+            <PrivacyPolicyModal open={isPolicyOpen} onClose={() => setIsPolicyOpen(false)} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -56,6 +63,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#f4f6f8",
+  },
+  flex: {
+    flex: 1,
   },
   container: {
     flexGrow: 1,

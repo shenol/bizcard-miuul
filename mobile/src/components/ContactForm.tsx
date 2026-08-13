@@ -7,6 +7,9 @@ import { WEBHOOK_URL } from "../lib/config";
 type Action = "save_card" | "meeting_request";
 type Status = "idle" | "sending" | "success" | "error";
 
+const toLocalISODate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 export function ContactForm({
   cardOwner,
   name,
@@ -70,7 +73,7 @@ export function ContactForm({
           type: action,
           name,
           email,
-          meetingDate: action === "meeting_request" ? meetingDate!.toISOString().split("T")[0] : null,
+          meetingDate: action === "meeting_request" ? toLocalISODate(meetingDate!) : null,
           cardOwner,
           submittedAt: new Date().toISOString(),
         }),

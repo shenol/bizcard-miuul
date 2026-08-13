@@ -12,6 +12,10 @@ ve okunabilir kalsın, gereksiz karmaşıklaşmasın.
 Sıcak ve profesyonel. Aşırı resmi değil, aşırı gündelik değil.
 
 ## Yapı
+- `mobile/` klasörü Expo/React Native ile yazılmış mobil uygulama; artık
+  aktif geliştirme burada devam ediyor (bkz. `mobile/README.md`). `src/`
+  altındaki web uygulaması dondurulmuş durumda - siliniyor değil, ama aktif
+  olarak geliştirilmiyor.
 - `src/App.jsx` ana bileşen; `src/components/` altında kart, QR kod, iletişim
   formu ve "telefonuma ekle" bileşenleri ayrı dosyalarda.
 - `src/data/profile.js` kartvizit sahibinin bilgileri (demo veri).
